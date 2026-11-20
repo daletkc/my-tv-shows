@@ -1,6 +1,7 @@
 package com.dalethomas.mytvshows.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
+import com.dalethomas.mytvshows.data.InstalledApps
 import com.dalethomas.mytvshows.data.Show
 import com.dalethomas.mytvshows.data.ShowStatus
 import com.dalethomas.mytvshows.domain.Services
@@ -51,6 +53,7 @@ fun MainScreen(vm: MainViewModel) {
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
     var heroId by rememberSaveable { mutableStateOf<String?>(null) }
     var adding by rememberSaveable { mutableStateOf(false) }
+    var changingAppFor by rememberSaveable { mutableStateOf<Long?>(null) }
     val zone = remember { ZoneId.systemDefault() }
     val firstFocus = remember { FocusRequester() }
 
@@ -59,17 +62,26 @@ fun MainScreen(vm: MainViewModel) {
         while (true) { delay(60_000); value = Instant.now() }
     }
     val showAllApps by vm.showAllApps.collectAsState()
-    val installed = remember(showAllApps) { Services.all.filter { showAllApps || isInstalled(context, it.packageName) } }
+    // Every app on the TV (debug demo mode pretends all recognized services are installed).
+    val installed = remember(showAllApps) { if (showAllApps) Services.all else InstalledApps.scan(context) }
     val shows by vm.shows.collectAsState()
     val userData by vm.userData.collectAsState()
     val episodes by vm.episodes.collectAsState()
     val backdrops by vm.backdrops.collectAsState()
     val unwatched = remember(shows, userData, episodes, now) { unwatchedCounts(shows, userData.watched, episodes, now) }
     val rows = remember(shows, now, unwatched) { groupRows(shows, now, unwatched) }
+    // Apps stay hidden until a show on the list is watched there.
+    val usedApps = remember(installed, shows) { installed.filter { app -> shows.any { app in Services.forShow(it, listOf(app)) } } }
     val selected: Show? = shows.firstOrNull { it.id == selectedId }
     val hero: Show? = rows.flatMap { it.shows }.let { all -> all.firstOrNull { it.id == heroId } ?: all.firstOrNull() }
 
-    BackHandler(enabled = selected != null || adding) { if (selected != null) selectedId = null else adding = false }
+    BackHandler(enabled = selected != null || adding) {
+        when {
+            changingAppFor != null -> changingAppFor = null
+            selected != null -> selectedId = null
+            else -> adding = false
+        }
+    }
 
     LaunchedEffect(selected?.id) { selected?.let { vm.loadEpisodes(it); vm.loadBackdrops(listOf(it)) } }
     // Focus moves quickly along a row; only fetch art and episodes once it settles on a show.
@@ -83,7 +95,23 @@ fun MainScreen(vm: MainViewModel) {
 
     ProvideTextStyle(TextStyle(fontFamily = Manrope)) {
         Box(Modifier.fillMaxSize()) {
-            if (selected != null) {
+            val changing = changingAppFor?.let { id -> userData.added.firstOrNull { it.tvmazeId == id } }
+            if (selected != null && changing != null) {
+                val current = installed.filter { it.packageName == changing.appPackage }
+                Box(Modifier.fillMaxSize().background(Palette.Ground).padding(horizontal = 48.dp, vertical = 40.dp)) {
+                    val pickFocus = remember { FocusRequester() }
+                    LaunchedEffect(Unit) { runCatching { pickFocus.requestFocus() } }
+                    AppPicker(
+                        show = selected,
+                        meta = "Now: ${changing.platform}",
+                        question = "Which app do you watch it on?",
+                        apps = current + (installed - current.toSet()),
+                        firstFocus = pickFocus,
+                        onPick = { vm.setApp(changing.tvmazeId, it); changingAppFor = null },
+                        onCancel = { changingAppFor = null },
+                    )
+                }
+            } else if (selected != null) {
                 val entry = userData.added.firstOrNull { it.showId == selected.id }
                 DetailScreen(
                     show = selected,
@@ -97,13 +125,17 @@ fun MainScreen(vm: MainViewModel) {
                     onRemove = entry?.let { e -> { vm.removeShow(e.tvmazeId); selectedId = null } },
                     onBack = { selectedId = null },
                     extra = {
-                        if (entry != null) StatusPicker(entry.status) { vm.setStatus(entry.tvmazeId, it) }
+                        if (entry != null) {
+                            WatchOn(entry.platform) { changingAppFor = entry.tvmazeId }
+                            StatusPicker(entry.status) { vm.setStatus(entry.tvmazeId, it) }
+                        }
                     },
                 )
             } else if (adding) {
                 AddShowScreen(
                     trackedMazeIds = shows.mapNotNull { it.tvmaze?.id }.toSet(),
-                    onAdd = { show, platform -> vm.addShow(show, platform); adding = false; tab = Tab.HOME },
+                    installed = installed,
+                    onAdd = { show, app -> vm.addShow(show, app); adding = false; tab = Tab.HOME },
                     onBack = { adding = false },
                 )
             } else {
@@ -131,7 +163,7 @@ fun MainScreen(vm: MainViewModel) {
                         tab == Tab.HOME -> HomeScreen(
                             rows = rows,
                             hero = hero,
-                            installed = installed,
+                            installed = usedApps,
                             now = now,
                             zone = zone,
                             unwatched = unwatched,
@@ -144,7 +176,7 @@ fun MainScreen(vm: MainViewModel) {
                             onAdd = { adding = true },
                             onShow = { selectedId = it.id },
                         )
-                        tab == Tab.SERVICES -> ServicesScreen(groupByService(shows, now, unwatched), now, zone, unwatched, footer) { selectedId = it.id }
+                        tab == Tab.SERVICES -> ServicesScreen(groupByService(shows, now, unwatched, others = usedApps), now, zone, unwatched, footer) { selectedId = it.id }
                         else -> ComingUpScreen(
                             days = groupByDay(shows, episodes, now, zone),
                             backdrops = backdrops,
@@ -157,6 +189,18 @@ fun MainScreen(vm: MainViewModel) {
                     }
                 }
             }
+        }
+    }
+}
+
+/** The app this show opens in, with a way to change it. */
+@Composable
+private fun WatchOn(appName: String, onChange: () -> Unit) {
+    Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+        SectionTitle("WATCH ON")
+        Row(horizontalArrangement = Arrangement.spacedBy(9.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(appName, color = Palette.Text, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Pill("Change app", onClick = onChange)
         }
     }
 }

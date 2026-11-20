@@ -12,6 +12,7 @@ import com.dalethomas.mytvshows.data.TvMazeApi
 import com.dalethomas.mytvshows.data.UserData
 import com.dalethomas.mytvshows.data.UserRepository
 import com.dalethomas.mytvshows.data.WatchMark
+import com.dalethomas.mytvshows.domain.Service
 import com.dalethomas.mytvshows.domain.toShows
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -88,11 +89,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { user.setWatched(show.id, mark) }
     }
 
-    fun addShow(result: TvMazeApi.MazeShow, platform: String) {
+    fun addShow(result: TvMazeApi.MazeShow, app: Service) {
         viewModelScope.launch {
-            user.addShow(AddedShow(result.id, result.name, platform, result.posterUrl, System.currentTimeMillis()))
+            user.addShow(AddedShow(result.id, result.name, app.name, result.posterUrl, System.currentTimeMillis(), appPackage = app.packageName))
             user.refreshEpisodes(listOf(result.id))
         }
+    }
+
+    fun setApp(tvmazeId: Long, app: Service) {
+        viewModelScope.launch { user.setApp(tvmazeId, app.name, app.packageName) }
     }
 
     fun setStatus(tvmazeId: Long, status: ShowStatus) {

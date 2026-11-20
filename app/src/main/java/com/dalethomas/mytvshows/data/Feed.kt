@@ -27,6 +27,8 @@ data class Show(
     val upcoming: String? = null,
     @SerialName("recommended_on") val recommendedOn: String? = null,
     val tvmaze: TvMaze? = null,
+    /** Android package of the app picked to watch it (shows added on the TV). */
+    @SerialName("app_package") val appPackage: String? = null,
 ) {
     val posterUrl: String? get() = tvmaze?.poster?.medium ?: tvmaze?.poster?.original
     val nextEpisode: Episode? get() = tvmaze?.nextEpisode

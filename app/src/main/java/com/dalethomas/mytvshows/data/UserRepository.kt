@@ -39,6 +39,8 @@ data class AddedShow(
     val posterUrl: String? = null,
     val addedAtMs: Long,
     val status: String = ShowStatus.WATCHING.id,
+    /** Android package of the app it's watched on; null for lists saved before apps were detected. */
+    val appPackage: String? = null,
 ) {
     val showId: String get() = "added-$tvmazeId"
 }
@@ -104,6 +106,10 @@ class UserRepository private constructor(context: Context) {
 
     suspend fun addShow(show: AddedShow) =
         edit { d -> d.copy(added = d.added.filterNot { it.tvmazeId == show.tvmazeId } + show) }
+
+    suspend fun setApp(tvmazeId: Long, name: String, appPackage: String) = edit { d ->
+        d.copy(added = d.added.map { if (it.tvmazeId == tvmazeId) it.copy(platform = name, appPackage = appPackage) else it })
+    }
 
     suspend fun setStatus(tvmazeId: Long, status: ShowStatus) = edit { d ->
         d.copy(added = d.added.map { if (it.tvmazeId == tvmazeId) it.copy(status = status.id) else it })

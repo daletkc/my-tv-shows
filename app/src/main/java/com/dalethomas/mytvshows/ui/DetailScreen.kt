@@ -24,6 +24,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -74,14 +76,15 @@ fun DetailScreen(
     extra: @Composable () -> Unit = {},
 ) {
     val context = LocalContext.current
-    val openWith = Services.forPlatform(show.platform).filter { it in installed }
+    val openWith = Services.forShow(show, installed)
     val focus = remember { FocusRequester() }
     LaunchedEffect(show.id) { runCatching { focus.requestFocus() } }
 
     Box(Modifier.fillMaxSize().background(Palette.Ground)) {
         if (!backdrop.isNullOrBlank()) {
+            // Slight zoom crops the thin frames some TVMaze artwork has baked in.
             AsyncImage(model = backdrop, contentDescription = null, contentScale = ContentScale.Crop, alpha = 0.22f,
-                modifier = Modifier.fillMaxSize())
+                modifier = Modifier.fillMaxSize().clipToBounds().graphicsLayer(scaleX = 1.1f, scaleY = 1.1f))
         }
         Row(Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 40.dp), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
             Poster(show, Modifier.size(170.dp, 255.dp).clip(RoundedCornerShape(10.dp)))

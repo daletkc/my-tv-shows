@@ -11,6 +11,7 @@ Kotlin + Compose for TV, single module (`app/`), package `com.dalethomas.mytvsho
 - Show info, episodes and air dates come from the free TVMaze API (no key needed).
 - Look: "cinematic" Home. The focused show's TVMaze backdrop fills the screen behind a big title, a season progress bar and a main button; poster rows below (focused row snaps to the top). Font: Manrope (bundled, SIL OFL, see `MANROPE-OFL.txt`).
 - Tabs: **Home**, **By service**, **Coming up** (next 7 days as artwork cards, day names only, no clock times), **+ Add** (search TVMaze, pick the service).
+- Streaming apps: the app scans the TV's installed apps (`data/InstalledApps.kt`). An app stays hidden (no "Your apps" tile, no "By service" column) until a show on the list is watched there. Adding a show: if TVMaze's network matches exactly one installed app, it's used automatically; otherwise the user picks from the apps on the TV (any app, not only the 12 recognized ones). Details has "Watch on · Change app".
 - On each show: mark the last episode watched (gives "N new episodes" and a "Ready to watch" row) and set a status: Watching, To watch, Waiting for new season, Done.
 
 ## Rules
@@ -66,11 +67,12 @@ Kotlin + Compose for TV, single module (`app/`), package `com.dalethomas.mytvsho
 - `data/UserRepository.kt`: the saved list, watched markers, show status, TVMaze episode cache.
 - `data/TvMazeApi.kt`: search and episode lists.
 - `data/BackdropRepository.kt`: backdrop image URL per show (TVMaze `/shows/{id}/images`), looked up once and cached in `files/backdrops.json`.
-- `domain/Rows.kt`, `Progress.kt`, `Seasons.kt`, `Week.kt`, `Services.kt`: row grouping, unwatched counts, season progress, the Coming up list, the streaming apps the app can open (only installed ones are shown; add more apps to `Services.all` by package name).
+- `domain/Rows.kt`, `Progress.kt`, `Seasons.kt`, `Week.kt`, `Services.kt`: row grouping, unwatched counts, season progress, the Coming up list, the the 12 recognized streaming apps (brand colors, TVMaze network matching; others still work as plain name tiles). Add an app to `Services.all` only to give it brand colors or automatic matching.
 - `ui/`: Compose screens.
 
 ## Troubleshooting
 
 - "Unable to delete directory" during a build: `./gradlew --stop`, delete `app/build`, rebuild.
 - `INSTALL_FAILED_UPDATE_INCOMPATIBLE`: signature mismatch (see Rules). Uninstalling fixes it but erases the list.
-- No streaming app shows up under "Your apps": the app only lists services from `Services.all` that are installed on that TV.
+- No app under "Your apps": apps appear only once a show on the list uses them.
+- An app is missing from the picker: it must have a TV home-screen entry (LEANBACK_LAUNCHER). Utilities are hidden by `NOT_STREAMING` in `data/InstalledApps.kt`.

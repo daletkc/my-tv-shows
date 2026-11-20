@@ -4,7 +4,7 @@ A Google TV app for keeping track of the shows your household watches:
 
 - Add shows with the remote (search by title, pick where you watch it).
 - See what's new this week, what's coming soon, and how many episodes you haven't watched yet.
-- Jump straight into the right streaming app.
+- Jump straight into the right streaming app. It works with the apps already on your TV, including ones it has never heard of.
 
 Your list is saved on your TV. No account or server needed. Show data comes from [TVMaze](https://www.tvmaze.com) (CC BY-SA).
 

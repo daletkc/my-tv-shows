@@ -34,6 +34,7 @@ import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
@@ -82,7 +83,9 @@ fun CinematicBackdrop(url: String?) {
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         alignment = BiasAlignment(0f, -0.4f),
-                        modifier = Modifier.align(Alignment.TopEnd).size(750.dp, 430.dp),
+                        // Slight zoom crops the thin frames some TVMaze artwork has baked in.
+                        modifier = Modifier.align(Alignment.TopEnd).size(750.dp, 430.dp).clipToBounds()
+                            .graphicsLayer(scaleX = 1.1f, scaleY = 1.1f),
                     )
                 }
             }
@@ -265,7 +268,7 @@ private fun Hero(
     onSetWatched: (WatchMark) -> Unit,
 ) {
     val context = LocalContext.current
-    val openWith = Services.forPlatform(show.platform).firstOrNull { it in installed }
+    val openWith = Services.forShow(show, installed).firstOrNull()
     val air = show.nextAirInstant()
     val upcoming = air != null && !air.isBefore(now)
     // Only offer a specific episode once the household has marked its place.

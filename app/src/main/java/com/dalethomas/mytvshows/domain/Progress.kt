@@ -68,6 +68,7 @@ fun toShows(
         title = a.title,
         kind = "tracked",
         platform = a.platform,
+        appPackage = a.appPackage,
         status = status.label,
         statusGroup = status.id,
         tvmaze = TvMaze(

@@ -47,14 +47,21 @@ import com.dalethomas.mytvshows.data.Poster
 import com.dalethomas.mytvshows.data.Show
 import com.dalethomas.mytvshows.data.TvMaze
 import com.dalethomas.mytvshows.data.TvMazeApi
+import com.dalethomas.mytvshows.domain.Service
 import com.dalethomas.mytvshows.domain.Services
+import com.dalethomas.mytvshows.domain.autoPickApp
+import com.dalethomas.mytvshows.domain.whichAppQuestion
 import kotlinx.coroutines.launch
 
-/** Search TVMaze, pick a show, pick where you watch it. */
+/**
+ * Search TVMaze and pick a show. If its provider is installed on the TV it is used straight
+ * away; otherwise the user picks from the apps on this TV.
+ */
 @Composable
 fun AddShowScreen(
     trackedMazeIds: Set<Long>,
-    onAdd: (TvMazeApi.MazeShow, String) -> Unit,
+    installed: List<Service>,
+    onAdd: (TvMazeApi.MazeShow, Service) -> Unit,
     onBack: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -127,7 +134,16 @@ fun AddShowScreen(
 
         val chosen = picked
         if (chosen != null) {
-            WherePicker(chosen, pickFocus, onPick = { onAdd(chosen, it) }, onCancel = { picked = null })
+            val guessed = Services.forPlatform(chosen.channel.orEmpty()).filter { it in installed }
+            AppPicker(
+                show = chosen.asPreviewShow(),
+                meta = listOfNotNull(chosen.year, chosen.channel, chosen.status).joinToString(" · "),
+                question = whichAppQuestion(chosen.channel, installed),
+                apps = guessed + (installed - guessed.toSet()),
+                firstFocus = pickFocus,
+                onPick = { onAdd(chosen, it) },
+                onCancel = { picked = null },
+            )
         } else if (results.isNotEmpty()) {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(18.dp), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)) {
                 itemsIndexed(results, key = { _, r -> r.id }) { i, r ->
@@ -138,7 +154,12 @@ fun AddShowScreen(
                         captionHighlighted = already,
                         modifier = Modifier.endOfRow(i == results.lastIndex)
                             .then(if (i == 0) Modifier.focusRequester(resultsFocus) else Modifier),
-                    ) { if (!already) picked = r }
+                    ) {
+                        if (!already) {
+                            val auto = autoPickApp(r.channel, installed)
+                            if (auto != null) onAdd(r, auto) else picked = r
+                        }
+                    }
                 }
             }
         }
@@ -146,32 +167,44 @@ fun AddShowScreen(
     }
 }
 
+/** "Which app do you watch it on?" with a tile for each app on the TV. */
 @Composable
-private fun WherePicker(show: TvMazeApi.MazeShow, firstFocus: FocusRequester, onPick: (String) -> Unit, onCancel: () -> Unit) {
-    val guessed = Services.forPlatform(show.channel.orEmpty())
-    val ordered = guessed + (Services.all - guessed.toSet())
+fun AppPicker(
+    show: Show,
+    meta: String,
+    question: String,
+    apps: List<Service>,
+    firstFocus: FocusRequester,
+    onPick: (Service) -> Unit,
+    onCancel: () -> Unit,
+) {
     Column(
         Modifier.background(Palette.Panel, RoundedCornerShape(16.dp)).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            Poster(show.asPreviewShow(), Modifier.size(70.dp, 100.dp))
+            Poster(show, Modifier.size(70.dp, 100.dp))
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Where do you watch ${show.name}?", color = Palette.Text, fontSize = 22.sp, fontWeight = FontWeight.SemiBold,
+                Text(show.title, color = Palette.Text, fontSize = 22.sp, fontWeight = FontWeight.SemiBold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(listOfNotNull(show.year, show.channel, show.status).joinToString(" · "), color = Palette.Muted, fontSize = 15.sp)
+                if (meta.isNotBlank()) Text(meta, color = Palette.Muted, fontSize = 13.sp)
+                Text(question, color = Palette.Text, fontSize = 15.sp)
             }
+        }
+        if (apps.isEmpty()) {
+            Text("No streaming apps found on this TV. Install the app from Google Play, then add the show again.",
+                color = Palette.Muted, fontSize = 14.sp)
         }
         // Horizontal padding leaves room for the focused tile's zoom.
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)) {
-            itemsIndexed(ordered, key = { _, s -> s.packageName }) { i, service ->
-                AppTile(service, onClick = { onPick(service.name) },
+            itemsIndexed(apps, key = { _, s -> s.packageName }) { i, service ->
+                AppTile(service, onClick = { onPick(service) },
                     modifier = if (i == 0) Modifier.focusRequester(firstFocus) else Modifier)
             }
-            show.channel?.takeIf { guessed.isEmpty() }?.let { ch ->
-                item(key = "other") { Pill(ch, onClick = { onPick(ch) }) }
+            item(key = "cancel") {
+                Pill("Cancel", onClick = onCancel,
+                    modifier = Modifier.endOfRow(true).then(if (apps.isEmpty()) Modifier.focusRequester(firstFocus) else Modifier))
             }
-            item(key = "cancel") { Pill("Cancel", onClick = onCancel, modifier = Modifier.endOfRow(true)) }
         }
     }
 }
