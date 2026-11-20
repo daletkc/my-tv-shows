@@ -1,0 +1,73 @@
+# CLAUDE.md
+
+Guidance for Claude Code working in this repo.
+
+## What this is
+
+**My TV Shows**: an Android TV / Google TV app that tracks the shows a household watches.
+Kotlin + Compose for TV, single module (`app/`), package `com.dalethomas.mytvshows`.
+
+- The show list lives **only on the TV**, in the app's storage (`files/user.json`). No account, no server.
+- Show info, episodes and air dates come from the free TVMaze API (no key needed).
+- Tabs: **Home** (next up, installed streaming apps, show rows), **By service**, **This week**, **+ Add** (search TVMaze, pick the service).
+- On each show: mark the last episode watched (gives "N new episodes" and a "Ready to watch" row) and set a status: Watching, To watch, Waiting for new season, Done.
+
+## Rules
+
+- **Ask the user before installing on their TV** or changing any TV setting.
+- **Uninstalling the app erases the list.** Updating with `adb install -r` keeps it.
+- Debug builds are signed with this computer's debug key. Installing a build from a *different* computer over the top fails with a signature error; the only way past that is uninstalling, which erases the list. Build and install from the same computer each time.
+- Never commit `local.properties` (machine-specific, gitignored).
+- UI text: plain words, no em dashes.
+
+## First-time setup (do these in order, check each before moving on)
+
+1. **JDK 17.** Gradle 8.11 + AGP 8.7 need exactly JDK 17 (newer JDKs, including Android Studio's bundled one, fail).
+   - Windows: `winget install EclipseAdoptium.Temurin.17.JDK`
+   - macOS: `brew install --cask temurin@17`
+   - Set `JAVA_HOME` to it for the build commands.
+2. **Android SDK.** Easiest is Android Studio (installs the SDK on first run). Or the command-line tools, then `sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"`.
+3. **`local.properties`** in the repo root, pointing at the SDK (forward slashes work on Windows):
+   ```
+   sdk.dir=C:/Users/<you>/AppData/Local/Android/Sdk
+   ```
+   macOS default: `sdk.dir=/Users/<you>/Library/Android/sdk`
+4. **Build and test:**
+   ```bash
+   ./gradlew :app:testDebugUnitTest
+   ./gradlew :app:assembleDebug   # -> app/build/outputs/apk/debug/app-debug.apk
+   ```
+5. **Turn on debugging on the TV** (the user does this with the remote):
+   - Settings > System > About > scroll to **Android TV OS build**, press it 7 times ("You are now a developer").
+   - Settings > System > Developer options: turn on **USB debugging** (on some TVs: **Network debugging** or **Wireless debugging**).
+   - Find the TV's IP: Settings > Network & Internet > the connected network.
+6. **Connect adb** (`adb` is in the SDK's `platform-tools`):
+   ```bash
+   adb connect <TV-IP>:5555
+   ```
+   The TV shows "Allow USB debugging?". The user picks **Always allow from this computer**.
+   If the TV only offers **Wireless debugging** with a pairing code: on the TV choose "Pair device with pairing code", then `adb pair <IP>:<pair-port> <code>` and `adb connect <IP>:<port shown on that screen>`.
+   Check with `adb devices` (should say `device`, not `unauthorized`).
+7. **Install and open** (ask first):
+   ```bash
+   adb install -r app/build/outputs/apk/debug/app-debug.apk
+   adb shell monkey -p com.dalethomas.mytvshows -c android.intent.category.LEANBACK_LAUNCHER 1
+   ```
+   It also appears under **Your apps** on the Google TV home screen.
+
+## Updating later
+
+`git pull`, rebuild (step 4), install with `adb install -r` (step 7). The list carries over.
+
+## Code map
+
+- `data/UserRepository.kt`: the saved list, watched markers, show status, TVMaze episode cache.
+- `data/TvMazeApi.kt`: search and episode lists.
+- `domain/Rows.kt`, `Progress.kt`, `Week.kt`, `Services.kt`: row grouping, unwatched counts, the week view, the streaming apps the app can open (only installed ones are shown; add more apps to `Services.all` by package name).
+- `ui/`: Compose screens.
+
+## Troubleshooting
+
+- "Unable to delete directory" during a build: `./gradlew --stop`, delete `app/build`, rebuild.
+- `INSTALL_FAILED_UPDATE_INCOMPATIBLE`: signature mismatch (see Rules). Uninstalling fixes it but erases the list.
+- No streaming app shows up under "Your apps": the app only lists services from `Services.all` that are installed on that TV.
