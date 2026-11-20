@@ -8,6 +8,19 @@ A Google TV app for keeping track of the shows your household watches:
 
 Your list is saved on your TV. No account or server needed. Show data comes from [TVMaze](https://www.tvmaze.com) (CC BY-SA).
 
+![Home: the show you're on fills the screen, with new-episode counts and a button that opens the right app](docs/screenshots/home.jpg)
+
+| | |
+|---|---|
+| ![Moving through your shows changes the artwork](docs/screenshots/rows.jpg) | ![Show details: pick the last episode you watched](docs/screenshots/details.jpg) |
+| **Home.** Move along a row and the big picture follows. | **Details.** Press the last episode you watched; new ones turn amber. |
+| ![Your shows grouped by streaming app](docs/screenshots/services.jpg) | ![Add a show by searching for it](docs/screenshots/add.jpg) |
+| **By service.** Every show, grouped by where you watch it. | **Add.** Search by title (or the remote's mic), then pick the app. |
+
+There's also a **Coming up** tab: new episodes arriving in the next 7 days.
+
+Screenshots use sample shows. Posters and artwork come from TVMaze.
+
 ## Before you start: put your TV in developer mode
 
 The app isn't in the Play Store, so your TV has to allow installs from your computer. You do this once, with the remote (about 2 minutes):

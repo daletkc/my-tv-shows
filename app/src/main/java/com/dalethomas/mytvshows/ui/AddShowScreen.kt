@@ -129,7 +129,7 @@ fun AddShowScreen(
         if (chosen != null) {
             WherePicker(chosen, pickFocus, onPick = { onAdd(chosen, it) }, onCancel = { picked = null })
         } else if (results.isNotEmpty()) {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(18.dp), contentPadding = PaddingValues(vertical = 6.dp)) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(18.dp), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)) {
                 itemsIndexed(results, key = { _, r -> r.id }) { i, r ->
                     val already = r.id in trackedMazeIds
                     PosterCard(
