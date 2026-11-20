@@ -37,10 +37,11 @@ Kotlin + Compose for TV, single module (`app/`), package `com.dalethomas.mytvsho
    ./gradlew :app:testDebugUnitTest
    ./gradlew :app:assembleDebug   # -> app/build/outputs/apk/debug/app-debug.apk
    ```
-5. **Turn on debugging on the TV** (the user does this with the remote):
-   - Settings > System > About > scroll to **Android TV OS build**, press it 7 times ("You are now a developer").
-   - Settings > System > Developer options: turn on **USB debugging** (on some TVs: **Network debugging** or **Wireless debugging**).
-   - Find the TV's IP: Settings > Network & Internet > the connected network.
+5. **Developer mode on the TV (required).** Nothing installs without it. The user does this with the remote, so walk them through it one step at a time and wait for each "done" (the README has the same steps for them):
+   - **Developer mode:** Settings > System > About > scroll to **Android TV OS build**, press it **7 times** until "You are now a developer!" (older Android TVs: Settings > Device Preferences > About > Build). It may ask for the TV's PIN.
+   - **Debugging:** Settings > System > Developer options (older: Settings > Device Preferences > Developer options) > turn on **USB debugging**, plus **Network debugging** / **Wireless debugging** if listed.
+   - **IP address:** Settings > Network & Internet > the connected network.
+   - Developer options gone after a TV update or reset? Repeat the 7 presses.
 6. **Connect adb** (`adb` is in the SDK's `platform-tools`):
    ```bash
    adb connect <TV-IP>:5555

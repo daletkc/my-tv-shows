@@ -8,6 +8,19 @@ A Google TV app for keeping track of the shows your household watches:
 
 Your list is saved on your TV. No account or server needed. Show data comes from [TVMaze](https://www.tvmaze.com) (CC BY-SA).
 
+## Before you start: put your TV in developer mode
+
+The app isn't in the Play Store, so your TV has to allow installs from your computer. You do this once, with the remote (about 2 minutes):
+
+1. **Turn on developer mode.** Open **Settings > System > About**. Scroll to **Android TV OS build** and press it **7 times** in a row. You'll see "You are now a developer!"
+   - On older Android TVs the path is **Settings > Device Preferences > About > Build**.
+   - If it asks for your PIN or password, enter it.
+2. **Turn on debugging.** Go back to **Settings > System > Developer options** (older TVs: **Settings > Device Preferences > Developer options**). Turn on **USB debugging**. If you also see **Network debugging** or **Wireless debugging**, turn that on too.
+3. **Write down the TV's IP address.** It's under **Settings > Network & Internet**: pick your Wi-Fi or Ethernet connection. It looks like `192.168.1.42`.
+4. **Allow your computer when asked.** The first time your computer connects, the TV shows **"Allow USB debugging?"**. Check **Always allow from this computer** and choose **Allow**.
+
+Developer mode doesn't change anything else on the TV. You can turn it off later in Developer options. The app stays installed, but you'll need developer mode back on to install updates.
+
 ## Getting it on your TV
 
 The easiest way is with [Claude Code](https://claude.com/claude-code):
