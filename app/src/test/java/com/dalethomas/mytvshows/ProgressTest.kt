@@ -3,7 +3,7 @@ package com.dalethomas.mytvshows
 import com.dalethomas.mytvshows.data.AddedShow
 import com.dalethomas.mytvshows.data.Episode
 import com.dalethomas.mytvshows.data.Show
-import com.dalethomas.mytvshows.data.ShowStatus
+import com.dalethomas.mytvshows.domain.TrackerStatus
 import com.dalethomas.mytvshows.data.TvMaze
 import com.dalethomas.mytvshows.data.WatchMark
 import com.dalethomas.mytvshows.domain.RowKind
@@ -70,18 +70,18 @@ class ProgressTest {
         val rows = groupRows(listOf(a, b), now, mapOf("a" to 3, "b" to 0))
         assertEquals(RowKind.READY_TO_WATCH, rows.first().kind)
         assertEquals(listOf("a"), rows.first().shows.map { it.id })
-        assertEquals(RowKind.WATCHING, rows[1].kind)
+        assertEquals(RowKind.CAUGHT_UP, rows[1].kind)
     }
 
     @Test fun listShowsCarryStatusAndEpisodes() {
         val added = listOf(
-            AddedShow(tvmazeId = 10, title = "Old One", platform = "Hulu", addedAtMs = 0, status = ShowStatus.DONE.id),
+            AddedShow(tvmazeId = 10, title = "Old One", platform = "Hulu", addedAtMs = 0, status = TrackerStatus.LOVED.id),
             AddedShow(tvmazeId = 20, title = "New One", platform = "Netflix", addedAtMs = 0),
         )
         val shows = toShows(added, mapOf(20L to episodes), now)
         assertEquals(listOf("added-10", "added-20"), shows.map { it.id })
         assertEquals("watched", shows[0].statusGroup)
-        assertEquals("Done", shows[0].status)
+        assertEquals("Loved", shows[0].status)
         assertEquals("Watching", shows[1].status)
         assertEquals("S2 E3", shows[1].nextEpisode?.code)
         assertEquals("S2 E2", shows[1].tvmaze?.lastEpisode?.code)

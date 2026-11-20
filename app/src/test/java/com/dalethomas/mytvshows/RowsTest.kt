@@ -42,14 +42,16 @@ class RowsTest {
             show("loved", group = "watched"),
             show("cancelled", group = "ended"),
             show("odd", group = "other"),
+            show("nope", group = "not_for_us"),
+            show("rec-airing", group = "recommended", kind = "recommended", air = "2026-11-20T02:01:00+00:00"),
         ))
         assertEquals(listOf("tomorrow", "in-6-days"), rows[RowKind.NEW_THIS_WEEK])
         assertEquals(listOf("in-9-days"), rows[RowKind.COMING_SOON])
-        assertEquals(listOf("watching", "to-watch"), rows[RowKind.WATCHING])
-        assertEquals(listOf("waiting", "between"), rows[RowKind.RETURNING])
-        assertEquals(listOf("rec"), rows[RowKind.RECOMMENDED])
+        // Not started yet: "To watch" first, then recommendations, even ones airing this week.
+        assertEquals(listOf("to-watch", "rec", "rec-airing"), rows[RowKind.START_NEW])
+        assertEquals(listOf("watching", "waiting", "between"), rows[RowKind.CAUGHT_UP])
         assertEquals(listOf("loved", "cancelled"), rows[RowKind.FINISHED])
-        assertTrue(rows.values.none { "odd" in it })
+        assertTrue(rows.values.none { "odd" in it || "nope" in it })
     }
 
     @Test
@@ -61,7 +63,7 @@ class RowsTest {
             show("bad-date", group = "watching", air = "not a date"),
         ))
         assertEquals(listOf("sooner", "later"), rows[RowKind.NEW_THIS_WEEK])
-        assertEquals(listOf("past", "bad-date"), rows[RowKind.WATCHING])
+        assertEquals(listOf("past", "bad-date"), rows[RowKind.CAUGHT_UP])
     }
 
     @Test

@@ -44,6 +44,7 @@ import com.dalethomas.mytvshows.data.Show
 import com.dalethomas.mytvshows.data.WatchMark
 import com.dalethomas.mytvshows.domain.Service
 import com.dalethomas.mytvshows.domain.Services
+import com.dalethomas.mytvshows.domain.TrackerStatus
 import com.dalethomas.mytvshows.domain.airLabel
 import com.dalethomas.mytvshows.domain.focusSeason
 import com.dalethomas.mytvshows.domain.hasAired
@@ -222,4 +223,16 @@ private fun EpisodeLine(label: String, ep: Episode, now: Instant, zone: ZoneId) 
         ?.let { airLabel(it, now, zone) } ?: ep.airdate.orEmpty()
     val parts = listOfNotNull(ep.code.takeIf { it.isNotBlank() }, ep.name?.takeIf { it != "TBA" }, whenText.takeIf { it.isNotBlank() })
     Text("$label: " + parts.joinToString(" · "), color = Palette.Text, fontSize = 12.sp)
+}
+
+/** "How's it going?": the show's status, as on the tracker. */
+@Composable
+fun StatusPicker(current: TrackerStatus?, options: List<TrackerStatus>, onPick: (TrackerStatus) -> Unit) {
+    Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+        SectionTitle("STATUS")
+        @OptIn(ExperimentalLayoutApi::class)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(9.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            options.forEach { s -> Pill(s.label, selected = s == current, onClick = { onPick(s) }) }
+        }
+    }
 }

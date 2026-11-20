@@ -197,7 +197,7 @@ fun HomeScreen(
                                 row.kind == RowKind.READY_TO_WATCH -> newLabel(count)
                                 soon -> "New " + dayLabel(air!!, now, zone)
                                 air != null && !air.isBefore(now) -> dayLabel(air, now, zone)
-                                row.kind == RowKind.RECOMMENDED -> show.platform.takeIf { it.isNotBlank() }
+                                row.kind == RowKind.START_NEW -> if (show.kind == "recommended") "Recommended" else show.platform.takeIf { it.isNotBlank() }
                                 else -> show.status.takeIf { it.isNotBlank() }
                             }
                             PosterTile(

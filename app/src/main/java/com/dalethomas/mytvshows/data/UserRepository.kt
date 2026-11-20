@@ -2,6 +2,7 @@ package com.dalethomas.mytvshows.data
 
 import android.content.Context
 import android.util.Log
+import com.dalethomas.mytvshows.domain.TrackerStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,18 +19,6 @@ import java.io.File
 @Serializable
 data class WatchMark(val season: Int, val number: Int)
 
-/** Where a show stands. `id` is the status group the rows use. */
-enum class ShowStatus(val id: String, val label: String) {
-    WATCHING("watching", "Watching"),
-    TO_WATCH("to_watch", "To watch"),
-    WAITING("returning", "Waiting for new season"),
-    DONE("watched", "Done"),
-    ;
-    companion object {
-        fun of(id: String) = entries.firstOrNull { it.id == id } ?: WATCHING
-    }
-}
-
 /** A show on this TV's list. */
 @Serializable
 data class AddedShow(
@@ -38,7 +27,8 @@ data class AddedShow(
     val platform: String,
     val posterUrl: String? = null,
     val addedAtMs: Long,
-    val status: String = ShowStatus.WATCHING.id,
+    /** A TrackerStatus id. */
+    val status: String = TrackerStatus.WATCHING.id,
     /** Android package of the app it's watched on; null for lists saved before apps were detected. */
     val appPackage: String? = null,
 ) {
@@ -111,7 +101,7 @@ class UserRepository private constructor(context: Context) {
         d.copy(added = d.added.map { if (it.tvmazeId == tvmazeId) it.copy(platform = name, appPackage = appPackage) else it })
     }
 
-    suspend fun setStatus(tvmazeId: Long, status: ShowStatus) = edit { d ->
+    suspend fun setStatus(tvmazeId: Long, status: TrackerStatus) = edit { d ->
         d.copy(added = d.added.map { if (it.tvmazeId == tvmazeId) it.copy(status = status.id) else it })
     }
 

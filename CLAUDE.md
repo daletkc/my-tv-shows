@@ -12,7 +12,8 @@ Kotlin + Compose for TV, single module (`app/`), package `com.dalethomas.mytvsho
 - Look: "cinematic" Home. The focused show's TVMaze backdrop fills the screen behind a big title, a season progress bar and a main button; poster rows below (focused row snaps to the top). Font: Manrope (bundled, SIL OFL, see `MANROPE-OFL.txt`).
 - Tabs: **Home**, **By service**, **Coming up** (next 7 days as artwork cards, day names only, no clock times), **+ Add** (search TVMaze, pick the service).
 - Streaming apps: the app scans the TV's installed apps (`data/InstalledApps.kt`). An app stays hidden (no "Your apps" tile, no "By service" column) until a show on the list is watched there. Adding a show: if TVMaze's network matches exactly one installed app, it's used automatically; otherwise the user picks from the apps on the TV (any app, not only the 12 recognized ones). Details has "Watch on · Change app".
-- On each show: mark the last episode watched (gives "N new episodes" and a "Ready to watch" row) and set a status: Watching, To watch, Waiting for new season, Done.
+- On each show: mark the last episode watched (gives "N new episodes" and a "Ready to watch" row) and set a status: Watching, To watch, Waiting for new season, Loved, Liked, Meh (`domain/Statuses.kt`). Marking an episode of a To watch show sets Watching.
+- Rows: Ready to watch, Start something new (To watch), New this week, Coming soon, All caught up, Finished.
 
 ## Rules
 

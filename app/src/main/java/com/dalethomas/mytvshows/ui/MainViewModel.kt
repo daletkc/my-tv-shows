@@ -7,7 +7,7 @@ import com.dalethomas.mytvshows.data.AddedShow
 import com.dalethomas.mytvshows.data.BackdropRepository
 import com.dalethomas.mytvshows.data.Episode
 import com.dalethomas.mytvshows.data.Show
-import com.dalethomas.mytvshows.data.ShowStatus
+import com.dalethomas.mytvshows.domain.TrackerStatus
 import com.dalethomas.mytvshows.data.TvMazeApi
 import com.dalethomas.mytvshows.data.UserData
 import com.dalethomas.mytvshows.data.UserRepository
@@ -86,7 +86,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setWatched(show: Show, mark: WatchMark?) {
-        viewModelScope.launch { user.setWatched(show.id, mark) }
+        viewModelScope.launch {
+            user.setWatched(show.id, mark)
+            // Watching an episode of a "To watch" show means we started it.
+            val entry = user.data.value.added.firstOrNull { it.showId == show.id }
+            if (mark != null && entry != null && entry.status == TrackerStatus.TO_WATCH.id) user.setStatus(entry.tvmazeId, TrackerStatus.WATCHING)
+        }
     }
 
     fun addShow(result: TvMazeApi.MazeShow, app: Service) {
@@ -100,7 +105,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { user.setApp(tvmazeId, app.name, app.packageName) }
     }
 
-    fun setStatus(tvmazeId: Long, status: ShowStatus) {
+    fun setStatus(tvmazeId: Long, status: TrackerStatus) {
         viewModelScope.launch { user.setStatus(tvmazeId, status) }
     }
 

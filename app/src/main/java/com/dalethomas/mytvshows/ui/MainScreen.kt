@@ -30,7 +30,7 @@ import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.dalethomas.mytvshows.data.InstalledApps
 import com.dalethomas.mytvshows.data.Show
-import com.dalethomas.mytvshows.data.ShowStatus
+import com.dalethomas.mytvshows.domain.TrackerStatus
 import com.dalethomas.mytvshows.domain.Services
 import com.dalethomas.mytvshows.domain.groupByDay
 import com.dalethomas.mytvshows.domain.groupByService
@@ -127,7 +127,8 @@ fun MainScreen(vm: MainViewModel) {
                     extra = {
                         if (entry != null) {
                             WatchOn(entry.platform) { changingAppFor = entry.tvmazeId }
-                            StatusPicker(entry.status) { vm.setStatus(entry.tvmazeId, it) }
+                            // "Not for us" is "Remove from my list" here.
+                            StatusPicker(TrackerStatus.of(entry.status), TrackerStatus.entries - TrackerStatus.NOT_FOR_US) { vm.setStatus(entry.tvmazeId, it) }
                         }
                     },
                 )
@@ -205,13 +206,3 @@ private fun WatchOn(appName: String, onChange: () -> Unit) {
     }
 }
 
-/** Where the show stands on this TV's list; picks the row it appears in. */
-@Composable
-private fun StatusPicker(current: String, onPick: (ShowStatus) -> Unit) {
-    Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-        SectionTitle("STATUS")
-        Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-            ShowStatus.entries.forEach { s -> Pill(s.label, selected = s.id == current, onClick = { onPick(s) }) }
-        }
-    }
-}

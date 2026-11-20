@@ -4,7 +4,6 @@ import com.dalethomas.mytvshows.data.AddedShow
 import com.dalethomas.mytvshows.data.Episode
 import com.dalethomas.mytvshows.data.Poster
 import com.dalethomas.mytvshows.data.Show
-import com.dalethomas.mytvshows.data.ShowStatus
 import com.dalethomas.mytvshows.data.TvMaze
 import com.dalethomas.mytvshows.data.WatchMark
 import java.time.Instant
@@ -62,7 +61,7 @@ fun toShows(
     now: Instant,
 ): List<Show> = added.map { a ->
     val eps = episodes[a.tvmazeId].orEmpty().numbered()
-    val status = ShowStatus.of(a.status)
+    val status = TrackerStatus.of(a.status)
     Show(
         id = a.showId,
         title = a.title,
@@ -70,7 +69,7 @@ fun toShows(
         platform = a.platform,
         appPackage = a.appPackage,
         status = status.label,
-        statusGroup = status.id,
+        statusGroup = status.group,
         tvmaze = TvMaze(
             id = a.tvmazeId,
             name = a.title,
