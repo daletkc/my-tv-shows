@@ -8,7 +8,7 @@ A Google TV app for keeping track of the shows your household watches:
 
 Your list is saved on your TV. No account or server needed. Show data comes from [TVMaze](https://www.tvmaze.com) (CC BY-SA).
 
-**▶ [Watch the 30-second demo](docs/demo.mp4)** (with sound)
+[![Watch the 30-second demo on YouTube](docs/demo-thumbnail.jpg)](https://youtu.be/6nxI7r83TMA)
 
 ![Home: the show you're on fills the screen, with new-episode counts and a button that opens the right app](docs/screenshots/home.jpg)
 
