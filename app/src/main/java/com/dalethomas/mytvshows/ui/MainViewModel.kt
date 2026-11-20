@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dalethomas.mytvshows.data.AddedShow
+import com.dalethomas.mytvshows.data.BackdropRepository
 import com.dalethomas.mytvshows.data.Episode
 import com.dalethomas.mytvshows.data.Show
 import com.dalethomas.mytvshows.data.ShowStatus
@@ -22,9 +23,12 @@ import java.time.Instant
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val user = UserRepository.get(app)
+    private val art = BackdropRepository.get(app)
 
     val userData: StateFlow<UserData> = user.data
     val episodes: StateFlow<Map<Long, List<Episode>>> = user.episodes
+    /** TVMaze id -> backdrop image URL ("" = none). */
+    val backdrops: StateFlow<Map<Long, String>> = art.urls
 
     /** The shows on this TV's list. */
     val shows: StateFlow<List<Show>> = combine(user.data, user.episodes) { data, eps ->
@@ -46,6 +50,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     init {
         viewModelScope.launch {
             user.load()
+            art.load()
             _loaded.value = true
             refresh(force = false)
         }
@@ -71,6 +76,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun loadEpisodes(show: Show) {
         val id = show.tvmaze?.id ?: return
         viewModelScope.launch { user.refreshEpisodes(listOf(id)) }
+    }
+
+    /** Looks up backdrop art for these shows (once each; cached on the TV). */
+    fun loadBackdrops(shows: List<Show>) {
+        val ids = shows.mapNotNull { it.tvmaze?.id }
+        viewModelScope.launch { ids.forEach { art.ensure(it) } }
     }
 
     fun setWatched(show: Show, mark: WatchMark?) {

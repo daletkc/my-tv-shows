@@ -9,7 +9,8 @@ Kotlin + Compose for TV, single module (`app/`), package `com.dalethomas.mytvsho
 
 - The show list lives **only on the TV**, in the app's storage (`files/user.json`). No account, no server.
 - Show info, episodes and air dates come from the free TVMaze API (no key needed).
-- Tabs: **Home** (next up, installed streaming apps, show rows), **By service**, **This week**, **+ Add** (search TVMaze, pick the service).
+- Look: "cinematic" Home. The focused show's TVMaze backdrop fills the screen behind a big title, a season progress bar and a main button; poster rows below (focused row snaps to the top). Font: Manrope (bundled, SIL OFL, see `MANROPE-OFL.txt`).
+- Tabs: **Home**, **By service**, **Coming up** (next 7 days as artwork cards, day names only, no clock times), **+ Add** (search TVMaze, pick the service).
 - On each show: mark the last episode watched (gives "N new episodes" and a "Ready to watch" row) and set a status: Watching, To watch, Waiting for new season, Done.
 
 ## Rules
@@ -64,7 +65,8 @@ Kotlin + Compose for TV, single module (`app/`), package `com.dalethomas.mytvsho
 
 - `data/UserRepository.kt`: the saved list, watched markers, show status, TVMaze episode cache.
 - `data/TvMazeApi.kt`: search and episode lists.
-- `domain/Rows.kt`, `Progress.kt`, `Week.kt`, `Services.kt`: row grouping, unwatched counts, the week view, the streaming apps the app can open (only installed ones are shown; add more apps to `Services.all` by package name).
+- `data/BackdropRepository.kt`: backdrop image URL per show (TVMaze `/shows/{id}/images`), looked up once and cached in `files/backdrops.json`.
+- `domain/Rows.kt`, `Progress.kt`, `Seasons.kt`, `Week.kt`, `Services.kt`: row grouping, unwatched counts, season progress, the Coming up list, the streaming apps the app can open (only installed ones are shown; add more apps to `Services.all` by package name).
 - `ui/`: Compose screens.
 
 ## Troubleshooting

@@ -29,3 +29,23 @@ fun airLabel(air: Instant, now: Instant, zone: ZoneId): String {
         else -> at.format(DATE_YEAR)
     }
 }
+
+private val WEEKDAY_FULL = DateTimeFormatter.ofPattern("EEEE", Locale.US)
+
+/**
+ * Day-only label, no clock time: "Today", "Tomorrow", "Thursday" (within a week),
+ * "Fri, Nov 27", or "Jan 5, 2027" in another year. Past days give "Aired Nov 12".
+ */
+fun dayLabel(air: Instant, now: Instant, zone: ZoneId): String {
+    val at = air.atZone(zone)
+    val today = now.atZone(zone).toLocalDate()
+    val days = ChronoUnit.DAYS.between(today, at.toLocalDate())
+    return when {
+        days < 0 -> "Aired " + at.format(DateTimeFormatter.ofPattern("MMM d", Locale.US))
+        days == 0L -> "Today"
+        days == 1L -> "Tomorrow"
+        days < 7 -> at.format(WEEKDAY_FULL)
+        at.year == today.year || days < 120 -> at.format(DATE)
+        else -> at.format(DATE_YEAR)
+    }
+}

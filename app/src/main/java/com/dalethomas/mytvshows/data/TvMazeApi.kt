@@ -10,7 +10,7 @@ import okhttp3.Request
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-/** Public TVMaze API (no key). Used for show search and full episode lists. Data is CC BY-SA. */
+/** Public TVMaze API (no key). Used for show search, full episode lists and backdrop art. Data is CC BY-SA. */
 object TvMazeApi {
     private const val BASE = "https://api.tvmaze.com"
 
@@ -65,6 +65,23 @@ object TvMazeApi {
         get("$BASE/shows/$tvmazeId/episodes") {
             FeedParser.json.decodeFromString(ListSerializer(MazeEpisode.serializer()), it)
         }.map { it.toEpisode() }
+
+    @Serializable
+    data class ImageSize(val url: String? = null, val width: Int? = null)
+
+    @Serializable
+    data class Resolutions(val original: ImageSize? = null, val large: ImageSize? = null)
+
+    @Serializable
+    data class ShowImage(val type: String? = null, val resolutions: Resolutions = Resolutions())
+
+    /** The widest "background" image for a show (wide artwork for the backdrop), or null if it has none. */
+    suspend fun backdrop(tvmazeId: Long): String? =
+        get("$BASE/shows/$tvmazeId/images") {
+            FeedParser.json.decodeFromString(ListSerializer(ShowImage.serializer()), it)
+        }.filter { it.type == "background" }
+            .maxByOrNull { it.resolutions.original?.width ?: 0 }
+            ?.resolutions?.let { it.large?.url ?: it.original?.url }
 
     private suspend fun <T> get(url: String, parse: (String) -> T): T = withContext(Dispatchers.IO) {
         val request = Request.Builder().url(url).header("User-Agent", "MyTvShows-AndroidTV").build()
